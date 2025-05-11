@@ -1,31 +1,49 @@
-import React, { useEffect } from "react";
-import { sendTelegramUser } from "../api/telegram"; // adjust the path as needed
+// src/components/TelegramLogin.jsx
+import React, { useEffect, useState } from "react";
+import { sendTelegramUser } from "../api/telegram"; // update the path if needed
 
 const TelegramLogin = () => {
+  const [status, setStatus] = useState("Initializing...");
+
   useEffect(() => {
-    const script = document.createElement("script");
-    script.src = "https://telegram.org/js/telegram-widget.js?7";
-    script.setAttribute("data-telegram-login", "Djangotestxr_bot"); // No @ symbol
-    script.setAttribute("data-size", "large");
-    script.setAttribute("data-userpic", "true");
-    script.setAttribute("data-request-access", "write");
-    script.setAttribute("data-onauth", "handleTelegramAuth(user)");
-    script.async = true;
+    if (window.Telegram.WebApp) {
+      const tgUser = window.Telegram.WebApp.initDataUnsafe.user;
 
-    document.getElementById("telegram-button").appendChild(script);
-
-    window.handleTelegramAuth = async function (user) {
-      try {
-        const data = await sendTelegramUser(user);
-        console.log("Authenticated:", data);
-        // Save token or update UI accordingly
-      } catch (err) {
-        console.error("Auth error:", err);
+      if (!tgUser) {
+        setStatus("No Telegram user detected.");
+        return;
       }
-    };
+
+      const authData = {
+        id: tgUser.id,
+        first_name: tgUser.first_name,
+        last_name: tgUser.last_name,
+        username: tgUser.username,
+        photo_url: tgUser.photo_url,
+        auth_date: window.Telegram.WebApp.initDataUnsafe.auth_date,
+        hash: window.Telegram.WebApp.initDataUnsafe.hash,
+      };
+
+      sendTelegramUser(authData)
+        .then((data) => {
+          setStatus("Login successful ✅");
+          console.log("Response:", data);
+        })
+        .catch((err) => {
+          setStatus("Login failed ❌");
+          console.error("Error sending Telegram user:", err);
+        });
+    } else {
+      setStatus("Telegram WebApp not found.");
+    }
   }, []);
 
-  return <div id="telegram-button"></div>;
+  return (
+    <div className="p-4 text-center">
+      <h2 className="text-xl font-bold">Telegram Login</h2>
+      <p>{status}</p>
+    </div>
+  );
 };
 
 export default TelegramLogin;
