@@ -1,56 +1,31 @@
-import { useEffect, useState } from "react";
-import { sendTelegramUser } from "../api/telegram";
+import React, { useEffect } from "react";
+import { sendTelegramUser } from "../api/telegram"; // adjust the path as needed
 
 const TelegramLogin = () => {
-  const [loading, setLoading] = useState(true);
-  const [message, setMessage] = useState({ type: "", text: "" });
-
   useEffect(() => {
-    const tg = window.Telegram?.WebApp;
+    const script = document.createElement("script");
+    script.src = "https://telegram.org/js/telegram-widget.js?7";
+    script.setAttribute("data-telegram-login", "YourBotUsername"); // No @ symbol
+    script.setAttribute("data-size", "large");
+    script.setAttribute("data-userpic", "true");
+    script.setAttribute("data-request-access", "write");
+    script.setAttribute("data-onauth", "handleTelegramAuth(user)");
+    script.async = true;
 
-    // Validate Telegram Mini App environment
-    if (!tg || !tg.initDataUnsafe || !tg.initDataUnsafe.user) {
-      setMessage({ type: "error", text: "Telegram WebApp not detected or user not available." });
-      setLoading(false);
-      return;
-    }
+    document.getElementById("telegram-button").appendChild(script);
 
-    const userData = tg.initDataUnsafe;
-
-    const extractedUserData = {
-      id: userData.user.id,
-      first_name: userData.user.first_name,
-      last_name: userData.user.last_name,
-      username: userData.user.username,
-      photo_url: userData.user.photo_url,
-      auth_date: userData.auth_date,
-      hash: userData.hash,
+    window.handleTelegramAuth = async function (user) {
+      try {
+        const data = await sendTelegramUser(user);
+        console.log("Authenticated:", data);
+        // Save token or update UI accordingly
+      } catch (err) {
+        console.error("Auth error:", err);
+      }
     };
-
-    // Send data to backend
-    sendTelegramUser(extractedUserData)
-      .then((res) => {
-        localStorage.setItem("access_token", res.access_token);
-        setMessage({ type: "success", text: "Logged in successfully!" });
-      })
-      .catch((err) => {
-        console.error("Telegram login error:", err);
-        setMessage({ type: "error", text: "Failed to authenticate." });
-      })
-      .finally(() => setLoading(false));
   }, []);
 
-  return (
-    <div className="text-center mt-4">
-      {loading && <p className="text-gray-600">Authenticating with Telegram...</p>}
-      {!loading && message.type === "error" && (
-        <p className="text-red-500 font-medium">{message.text}</p>
-      )}
-      {!loading && message.type === "success" && (
-        <p className="text-green-600 font-medium">{message.text}</p>
-      )}
-    </div>
-  );
+  return <div id="telegram-button"></div>;
 };
 
 export default TelegramLogin;
