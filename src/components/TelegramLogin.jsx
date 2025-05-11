@@ -5,7 +5,7 @@ const TelegramLogin = () => {
   useEffect(() => {
     const script = document.createElement("script");
     script.src = "https://telegram.org/js/telegram-widget.js?7";
-    script.setAttribute("data-telegram-login", "YourBotUsername"); // No @ symbol
+    script.setAttribute("data-telegram-login", "Djangotestxr_bot"); // No @ symbol
     script.setAttribute("data-size", "large");
     script.setAttribute("data-userpic", "true");
     script.setAttribute("data-request-access", "write");
